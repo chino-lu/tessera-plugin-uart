@@ -1,0 +1,45 @@
+# UART link: ESPHome's packet transport over a UART (RS485) on the screen's free pins, so two ESP boards exchange
+# sensors and binary sensors directly, without Wi-Fi or Home Assistant between them. It speaks the very protocol of
+# ESPHome's `packet_transport` platform (platform: uart): a Tessera screen and any other ESPHome node (a KC868, a plain
+# ESP32) exchange states over a serial link, multi-drop RS485 included. The pins and the baud rate are asked when the
+# plugin is added; the link's own health is a tile, a setting and a text sensor in Home Assistant.
+id: uart_link
+version: 0.1.0
+api: "0.9"
+icon: serial-port
+maintainer: chino-lu
+license: MIT
+stage: beta
+topics: [tech]
+requires:
+  esphome: 2026.6.2
+boards: any
+flash_kb: 24
+
+# What the person fills in when the plugin is added: the two pins of the RS485 transceiver (a free pin of the board each)
+# and the baud rate, which must match the other board's. The peer is the other node's ESPHome name: packets carry it in
+# clear text, and the link listens only to packets of that name.
+inputs:
+  - { id: tx_pin, kind: gpio, label: input_tx_pin, hint: input_tx_pin_hint }
+  - { id: rx_pin, kind: gpio, label: input_rx_pin, hint: input_rx_pin_hint }
+  - { id: baud_rate, kind: text, label: input_baud_rate, hint: input_baud_rate_hint }
+  - { id: peer, kind: text, label: input_peer, hint: input_peer_hint }
+
+tiles:
+  # The link's own health on a page: when the peer was last heard, how many packets arrived, and how many went. It reads
+  # the text sensor and the two counters of plugin.yaml, which the component keeps up.
+  - id: link
+    name: tile_name
+    icon: serial-port
+    sizes: { min: 1x1, max: 2x1 }
+    memory: 500
+    example: tile_example
+    options:
+      - { id: peer, kind: text, label: option_peer, hint: option_peer_hint, default: "" }
+
+# The settings of plugin.yaml, also in the plugin's details on the screen's Plugins tab (their names as ids). The
+# switch pauses the link without a build; the status says what the link is doing, in Home Assistant and on the screen's
+# settings page.
+settings:
+  - { key: uart_link_on, label: setting_on, hint: setting_on_hint }
+  - { key: uart_link_status, label: setting_status }

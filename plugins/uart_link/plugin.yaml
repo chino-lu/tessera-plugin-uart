@@ -1,0 +1,68 @@
+# What a screen gets when it takes this plugin: a UART on the two free pins the person picked when the plugin was added
+# (defaults keep a build without them working), and the packet transport link on it, speaking ESPHome's packet_transport
+# protocol over the serial line. The link broadcasts this screen's own sensor and binary sensor states to the peer, and
+# listens to the peer's. The switch pauses it, the status says what it is doing, and the counters count the packets; all
+# four are in Home Assistant on the screen's device, and the status and the switch on the screen's settings page too.
+defaults:
+  TX_PIN: GPIO4
+  RX_PIN: GPIO5
+  BAUD_RATE: "115200"
+  PEER: ""
+
+# The serial line to the other board. 8 data bits, no parity, one stop bit: the defaults of ESPHome's packet transport
+# peer, and of the attached display's own RS485 configuration.
+uart:
+  id: uart_link_uart
+  tx_pin: ${TX_PIN}
+  rx_pin: ${RX_PIN}
+  baud_rate: ${BAUD_RATE}
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+# This screen's own states, sent to the peer. Name the entities of the screen (a sensor of the board, a template sensor
+# of another plugin) under out_sensors and out_binary_sensors in the plugin's component below; the peer receives them
+# as its own packet_transport sensors (platform: packet_transport, provider: <this screen's name>).
+
+# The on/off of the link, kept across a restart: off stops the broadcasts and the listening, without a build.
+switch:
+  - platform: template
+    id: uart_link_on
+    name: "UART link"
+    icon: mdi:serial-port
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    entity_category: config
+
+# What the link is doing, in the screen's language: listening, paused, or that no packet of the peer has arrived yet.
+text_sensor:
+  - platform: template
+    id: uart_link_status
+    name: "UART link status"
+    icon: mdi:serial-port
+    entity_category: diagnostic
+
+# How many packets of the peer arrived, and how many went to it. In Home Assistant, for a graph of the link.
+sensor:
+  - platform: template
+    id: uart_link_rx_count
+    name: "UART link packets received"
+    icon: mdi:download
+    unit_of_measurement: "packets"
+    state_class: total_increasing
+    entity_category: diagnostic
+  - platform: template
+    id: uart_link_tx_count
+    name: "UART link packets sent"
+    icon: mdi:upload
+    unit_of_measurement: "packets"
+    state_class: total_increasing
+    entity_category: diagnostic
+
+uart_link:
+  uart_id: uart_link_uart
+  peer: ${PEER}
+  on: uart_link_on
+  status: uart_link_status
+  rx_count: uart_link_rx_count
+  tx_count: uart_link_tx_count

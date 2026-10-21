@@ -1,0 +1,38 @@
+{
+  "_meta": { "name": "English" },
+  "screen": {
+    "name": "UART link",
+    "any_peer": "Any peer",
+    "waiting": "Waiting",
+    "no_packet": "No packet of the peer yet",
+    "last_packet": "Last packet {when}",
+    "seconds_ago": "{n} s ago",
+    "minutes_ago": "{n} min ago",
+    "hours_ago": "{n} h ago",
+    "counts": "{rx} received, {tx} sent",
+    "on": "UART link",
+    "status": "Status",
+    "status_on": "Listening",
+    "status_off": "Paused",
+    "status_waiting": "Waiting for the peer"
+  },
+  "app": {
+    "name": "UART link",
+    "summary": "Exchanges sensors with another ESP board over a serial line (RS485): ESPHome's packet transport on the screen's free pins.",
+    "input_tx_pin": "TX pin",
+    "input_tx_pin_hint": "A free pin of the board, to the RS485 transceiver's DI (data in).",
+    "input_rx_pin": "RX pin",
+    "input_rx_pin_hint": "A free pin of the board, from the transceiver's RO (data out).",
+    "input_baud_rate": "Baud rate",
+    "input_baud_rate_hint": "The speed of the line, the same as the other board's (115200 by default).",
+    "input_peer": "Peer name",
+    "input_peer_hint": "The other board's ESPHome name, such as kc868-aio. Empty listens to every node on the bus.",
+    "tile_name": "UART link",
+    "tile_example": "kc868-aio, last packet 5 s ago",
+    "option_peer": "Peer name",
+    "option_peer_hint": "The name the tile shows; empty shows any peer.",
+    "setting_on": "UART link",
+    "setting_on_hint": "Off pauses the link: no packets are sent or read, without a build.",
+    "setting_status": "UART link status"
+  }
+}

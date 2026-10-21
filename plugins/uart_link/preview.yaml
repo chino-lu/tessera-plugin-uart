@@ -1,0 +1,10 @@
+# What tools/preview.py shows (docs/PREVIEW.md): the link tile as if a peer had been heard a few seconds ago and packets
+# had gone both ways. The transport itself is hardware: the bench builds the firmware with it, but no packet arrives on a
+# computer, so the pictures show the tile with the counters the component would publish.
+tiles:
+  - tile: link
+    name: kc868-aio
+    options: { peer: kc868-aio }
+  - tile: link
+    name: Any peer
+    sizes: [1x1]
