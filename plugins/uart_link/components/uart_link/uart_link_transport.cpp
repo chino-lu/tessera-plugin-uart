@@ -26,6 +26,36 @@ static uint16_t crc16(const uint8_t *data, size_t len) {
   return crc;
 }
 
+// A little-endian reader over the packet's state section.
+class Reader {
+ public:
+  Reader(const uint8_t *data, size_t len) : data_(data), len_(len) {}
+  bool get_u8(uint8_t &out) {
+    if (pos_ + 1 > len_) return false;
+    out = data_[pos_++];
+    return true;
+  }
+  bool get_u32(uint32_t &out) {
+    if (pos_ + 4 > len_) return false;
+    out = 0;
+    for (int i = 0; i < 4; i++) out |= static_cast<uint32_t>(data_[pos_++]) << (8 * i);
+    return true;
+  }
+  // An id: a length byte and the bytes. Returns false when the packet ends here (the zero padding).
+  bool get_id(std::string &out) {
+    uint8_t len;
+    if (!get_u8(len) || len == 0 || pos_ + len > len_) return false;
+    out.assign(reinterpret_cast<const char *>(data_ + pos_), len);
+    pos_ += len;
+    return true;
+  }
+  size_t left() const { return len_ - pos_; }
+
+ private:
+  const uint8_t *data_;
+  size_t len_, pos_{0};
+};
+
 static void add_u16(std::vector<uint8_t> &vec, uint16_t data) {
   vec.push_back(static_cast<uint8_t>(data));
   vec.push_back(static_cast<uint8_t>(data >> 8));
@@ -67,11 +97,16 @@ void UartLinkTransport::add_out_binary_sensor(const char *broadcast_id, binary_s
   });
 }
 
+// The room a record still needs in the packet, the same rounding ESPHome's flush_ applies to the whole buffer.
+size_t UartLinkTransport::room_left_() const {
+  return LINK_MAX_PACKET - round4(this->data_.size());
+}
+
 void UartLinkTransport::add_data_(uint8_t key, const char *id, uint32_t data) {
-  auto len = 4 + 1 + 1 + strlen(id);
-  if (round4(this->header_.size()) + round4(this->data_.size() + len) > LINK_MAX_PACKET) {
+  auto len = 1 + 4 + 1 + strlen(id);
+  if (this->room_left_() < round4(len)) {
     this->send_packet_(this->data_);
-    this->data_.clear();
+    this->data_ = this->header_;
     this->data_.push_back(KEY_DATA);
   }
   this->data_.push_back(key);
@@ -81,9 +116,9 @@ void UartLinkTransport::add_data_(uint8_t key, const char *id, uint32_t data) {
 
 void UartLinkTransport::add_binary_data_(const char *id, bool data) {
   auto len = 1 + 1 + 1 + strlen(id);
-  if (round4(this->header_.size()) + round4(this->data_.size() + len) > LINK_MAX_PACKET) {
+  if (this->room_left_() < round4(len)) {
     this->send_packet_(this->data_);
-    this->data_.clear();
+    this->data_ = this->header_;
     this->data_.push_back(KEY_DATA);
   }
   this->data_.push_back(KEY_BINARY_SENSOR);
@@ -113,6 +148,9 @@ void UartLinkTransport::send_states_(bool all) {
       this->add_binary_data_(out.id, out.sensor->state);
     }
   }
+  // The packet is padded to a four byte boundary as a whole (ESPHome's flush_ rounds header and data together).
+  while (this->data_.size() & 0x3)
+    this->data_.push_back(0);
   this->send_packet_(this->data_);
   this->updated_ = false;
 }
@@ -156,23 +194,69 @@ void UartLinkTransport::process_(const std::vector<uint8_t> &data) {
     return;  // another node on a multi-drop bus
   this->rx_count_++;
   this->last_rx_ms_ = millis();
+  this->dispatch_(data);
   if (this->on_packet_)
     this->on_packet_();
+}
+
+// The state section of a packet, as ESPHome's packet_transport writes it: a data key (or a rolling code key, which this
+// link does not use), then records of a sensor key with a float and an id, or a binary sensor key with a byte and an
+// id, padded with zeros. Every record the screen registered under that remote id is published.
+void UartLinkTransport::dispatch_(const std::vector<uint8_t> &data) {
+  // Skip the header: magic, the sender's name, padded to a four byte boundary.
+  if (data.size() < 4) return;
+  size_t name_len = data[2];
+  size_t pos = round4(3 + name_len);
+  if (pos >= data.size()) return;
+  Reader reader(data.data() + pos, data.size() - pos);
+  uint8_t key;
+  if (!reader.get_u8(key) || key != KEY_DATA) return;  // no rolling code on this link
+  while (reader.left() > 0) {
+    if (!reader.get_u8(key)) return;
+    if (key == 0) continue;  // the padding
+    if (key == KEY_SENSOR) {
+      uint32_t raw;
+      std::string id;
+      if (!reader.get_u32(raw) || !reader.get_id(id)) return;
+      union { uint32_t u32; float f32; } value{.u32 = raw};
+      for (const auto &in : in_sensors_)
+        if (in.id == id)
+          static_cast<sensor::Sensor *>(in.entity)->publish_state(value.f32);
+    } else if (key == KEY_BINARY_SENSOR) {
+      uint8_t raw;
+      std::string id;
+      if (!reader.get_u8(raw) || !reader.get_id(id)) return;
+      for (const auto &in : in_binary_sensors_)
+        if (in.id == id)
+          static_cast<binary_sensor::BinarySensor *>(in.entity)->publish_state(raw != 0);
+    } else {
+      return;  // a key this link does not know: stop, the packet is not its own
+    }
+  }
+}
+
+void UartLinkTransport::setup() {
+  // The header is invariant: magic, this node's name, padded to four bytes. Built once; App's name is final by now.
+  if (!this->header_.empty())
+    return;
+  this->name_ = App.get_name();
+  add_u16(this->header_, MAGIC_NUMBER);
+  add_id(this->header_, this->name_.c_str());
+  while (this->header_.size() & 0x3)
+    this->header_.push_back(0);
 }
 
 void UartLinkTransport::loop() {
   if (this->updated_)
     this->send_states_(false);
+  // Every 15 seconds the full state, so a peer that restarted catches up (ESPHome's own update_interval default).
+  if (this->enabled_ && this->out_sensors_.size() + this->out_binary_sensors_.size() > 0 &&
+      millis() - this->last_send_ms_ >= 15000) {
+    this->last_send_ms_ = millis();
+    this->send_states_(true);
+  }
   if (!this->enabled_)
     return;
-  // The header is made once, in setup, from this node's name.
-  if (this->header_.empty()) {
-    this->name_ = App.get_name();
-    add_u16(this->header_, MAGIC_NUMBER);
-    add_id(this->header_, this->name_.c_str());
-    while (this->header_.size() & 0x3)
-      this->header_.push_back(0);
-  }
   while (this->available()) {
     uint8_t byte;
     if (!this->read_byte(&byte))

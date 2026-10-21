@@ -26,6 +26,7 @@ static const uint8_t LINK_CONTROL_BYTE = 0x7D;
 
 class UartLinkTransport : public uart::UARTDevice {
  public:
+  void setup() override;
   void loop();
   float get_setup_priority() const override { return setup_priority::PROCESSOR; }
 
@@ -39,6 +40,14 @@ class UartLinkTransport : public uart::UARTDevice {
   // This screen's own states, sent to the peer. The broadcast id is the id the peer receives; empty is the entity's id.
   void add_out_sensor(const char *broadcast_id, sensor::Sensor *sensor);
   void add_out_binary_sensor(const char *broadcast_id, binary_sensor::BinarySensor *sensor);
+  // The peer's states, received into this screen's entities: the entity to publish, by the id the peer sends
+  // (the remote id). Several entities may share one remote id (a sensor and a binary sensor of the same name).
+  void add_in_sensor(const char *remote_id, sensor::Sensor *sensor) {
+    in_sensors_.emplace_back(remote_id, sensor);
+  }
+  void add_in_binary_sensor(const char *remote_id, binary_sensor::BinarySensor *sensor) {
+    in_binary_sensors_.emplace_back(remote_id, sensor);
+  }
 
   uint32_t rx_count() const { return rx_count_; }
   uint32_t tx_count() const { return tx_count_; }
@@ -52,6 +61,8 @@ class UartLinkTransport : public uart::UARTDevice {
   void send_states_(bool all);
   void add_data_(uint8_t key, const char *id, uint32_t data);
   void add_binary_data_(const char *id, bool data);
+  void dispatch_(const std::vector<uint8_t> &data);
+  size_t room_left_() const;
 
   struct OutSensor {
     sensor::Sensor *sensor;
@@ -63,6 +74,11 @@ class UartLinkTransport : public uart::UARTDevice {
     const char *id;
     bool updated;
   };
+  struct InEntity {
+    InEntity(const char *id, void *entity) : id(id), entity(entity) {}
+    std::string id;
+    void *entity;
+  };
 
   std::string peer_;
   std::string name_;
@@ -71,6 +87,8 @@ class UartLinkTransport : public uart::UARTDevice {
   std::vector<uint8_t> receive_buffer_;
   std::vector<OutSensor> out_sensors_;
   std::vector<OutBinarySensor> out_binary_sensors_;
+  std::vector<InEntity> in_sensors_;
+  std::vector<InEntity> in_binary_sensors_;
   std::function<void()> on_packet_;
   bool enabled_{true};
   bool rx_started_{};
@@ -79,6 +97,7 @@ class UartLinkTransport : public uart::UARTDevice {
   uint32_t rx_count_{};
   uint32_t tx_count_{};
   uint32_t last_rx_ms_{};
+  uint32_t last_send_ms_{};
 };
 
 }  // namespace esphome::uart_link

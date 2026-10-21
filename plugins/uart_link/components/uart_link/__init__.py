@@ -5,12 +5,13 @@ name, the sensor and binary sensor states) framed as asynchronous HDLC (flag byt
 protocol of ESPHome's packet_transport platform (platform: uart), so a Tessera screen and any other ESPHome node
 exchange states over a serial link, RS485 included. This component is the plugin of it: it owns the switch, the status
 text sensor and the two counters of plugin.yaml, keeps them up, and draws the link's health on a tile and on the screen's
-settings page. register_plugin() takes the id, version, tile memory and the screen's texts from the manifest and
-translations/ beside this folder.
+settings page. The entities the link sends and receives are registered by the sibling component uart_link_entities
+(same folder of components/), from the screen's Override YAML. register_plugin() takes the id, version, tile memory and
+the screen's texts from the manifest and translations/ beside this folder.
 """
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import binary_sensor, sensor, smart_display, switch, text_sensor, uart
+from esphome.components import sensor, smart_display, switch, text_sensor, uart
 from esphome.const import CONF_ID, CONF_UART_ID
 
 DEPENDENCIES = ["smart_display", "uart", "sensor", "binary_sensor", "switch", "text_sensor"]
@@ -20,24 +21,9 @@ CONF_ON = "on"
 CONF_STATUS = "status"
 CONF_RX_COUNT = "rx_count"
 CONF_TX_COUNT = "tx_count"
-CONF_OUT_SENSORS = "out_sensors"
-CONF_OUT_BINARY_SENSORS = "out_binary_sensors"
 
 uart_link_ns = cg.esphome_ns.namespace("uart_link")
 UartLink = uart_link_ns.class_("UartLink", cg.Component)
-
-_OUT_SENSOR = cv.Schema(
-    {
-        cv.Required(CONF_ID): cv.use_id(sensor.Sensor),
-        cv.Optional("broadcast_id"): cv.validate_id_name,
-    }
-)
-_OUT_BINARY_SENSOR = cv.Schema(
-    {
-        cv.Required(CONF_ID): cv.use_id(binary_sensor.BinarySensor),
-        cv.Optional("broadcast_id"): cv.validate_id_name,
-    }
-)
 
 CONFIG_SCHEMA = cv.Schema(
     {
@@ -48,8 +34,6 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Required(CONF_STATUS): cv.use_id(text_sensor.TextSensor),
         cv.Required(CONF_RX_COUNT): cv.use_id(sensor.Sensor),
         cv.Required(CONF_TX_COUNT): cv.use_id(sensor.Sensor),
-        cv.Optional(CONF_OUT_SENSORS, default=[]): cv.ensure_list(_OUT_SENSOR),
-        cv.Optional(CONF_OUT_BINARY_SENSORS, default=[]): cv.ensure_list(_OUT_BINARY_SENSOR),
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -64,7 +48,3 @@ async def to_code(config):
     cg.add(var.set_status(await cg.get_variable(config[CONF_STATUS])))
     cg.add(var.set_rx_count(await cg.get_variable(config[CONF_RX_COUNT])))
     cg.add(var.set_tx_count(await cg.get_variable(config[CONF_TX_COUNT])))
-    for out in config[CONF_OUT_SENSORS]:
-        cg.add(var.add_out_sensor(await cg.get_variable(out[CONF_ID]), out.get("broadcast_id", "")))
-    for out in config[CONF_OUT_BINARY_SENSORS]:
-        cg.add(var.add_out_binary_sensor(await cg.get_variable(out[CONF_ID]), out.get("broadcast_id", "")))

@@ -34,6 +34,12 @@ class UartLink : public Component, public tessera::Plugin {
   void add_out_binary_sensor(binary_sensor::BinarySensor *sensor, const std::string &broadcast_id) {
     transport_.add_out_binary_sensor(broadcast_id.c_str(), sensor);
   }
+  void add_in_sensor(sensor::Sensor *sensor, const std::string &remote_id) {
+    transport_.add_in_sensor(remote_id.c_str(), sensor);
+  }
+  void add_in_binary_sensor(binary_sensor::BinarySensor *sensor, const std::string &remote_id) {
+    transport_.add_in_binary_sensor(remote_id.c_str(), sensor);
+  }
 
   // What the tile reads: the transport's own counters and the time of the last packet of the peer.
   uint32_t transport_rx_count() const { return transport_.rx_count(); }

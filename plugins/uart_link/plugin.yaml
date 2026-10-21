@@ -20,9 +20,8 @@ uart:
   parity: NONE
   stop_bits: 1
 
-# This screen's own states, sent to the peer. Name the entities of the screen (a sensor of the board, a template sensor
-# of another plugin) under out_sensors and out_binary_sensors in the plugin's component below; the peer receives them
-# as its own packet_transport sensors (platform: packet_transport, provider: <this screen's name>).
+# The hub of the link, with a fixed id: the screen's Override YAML registers the entities it sends and receives with
+# uart_link_entities (see the README).
 
 # The on/off of the link, kept across a restart: off stops the broadcasts and the listening, without a build.
 switch:
@@ -60,6 +59,7 @@ sensor:
     entity_category: diagnostic
 
 uart_link:
+  id: uart_link
   uart_id: uart_link_uart
   peer: ${PEER}
   on: uart_link_on
