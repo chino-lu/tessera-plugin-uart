@@ -30,16 +30,17 @@ screen's device: **UART link status** (listening, paused, or waiting for the pee
 
 ## Which screens
 
-Every screen: the plugin asks for two free pins when it is added, so it fits any board. The pins are the screen's own
-GPIO, to an RS485 transceiver beside it (TX to DI, RX from RO, and the transceiver's direction pin to a third pin of
-yours, or tied to transmit while sending). A bare UART peer (no RS485) works over short wires at the same settings.
+Every screen: the plugin asks for two free pins when it is added, written as pin names (`GPIO16`), so it fits any
+board. The pins are the screen's own GPIO, to an RS485 transceiver beside it (TX to DI, RX from RO, and the
+transceiver's direction pin to a third pin of yours, or tied to transmit while sending). A bare UART peer (no RS485)
+works over short wires at the same settings.
 
 ## Set up
 
 1. In Tessera, open **Plugins**, choose **UART link** and tick your screen. Give it the **TX pin** and the **RX pin** of
-   the RS485 transceiver (free pins of the board), the **Baud rate** (115200 by default, the same as the peer's), and
-   the **Peer name**: the other board's ESPHome name, such as `kc868-aio`. Leave it empty to listen to every node on the
-   bus. Add the plugin; the screen builds once.
+   the RS485 transceiver as pin names (free pins of the board, such as `GPIO16` and `GPIO15` on your Waveshare 7B), the
+   **Baud rate** (115200 by default, the same as the peer's), and the **Peer name**: the other board's ESPHome name, such
+   as `kc868-aio`. Leave it empty to listen to every node on the bus. Add the plugin; the screen builds once.
 2. On the other board, configure ESPHome's own packet transport over its UART, with the same baud rate:
    `uart:` with its pins, then `packet_transport: platform: uart, uart_id: <its uart>`, and the states to broadcast
    under `sensors:` and `binary_sensors:` (with `broadcast_id` where the peer should receive another id). Its

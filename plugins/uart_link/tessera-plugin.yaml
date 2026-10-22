@@ -20,8 +20,8 @@ flash_kb: 24
 # and the baud rate, which must match the other board's. The peer is the other node's ESPHome name: packets carry it in
 # clear text, and the link listens only to packets of that name.
 inputs:
-  - { id: tx_pin, kind: gpio, label: input_tx_pin, hint: input_tx_pin_hint }
-  - { id: rx_pin, kind: gpio, label: input_rx_pin, hint: input_rx_pin_hint }
+  - { id: tx_pin, kind: text, label: input_tx_pin, hint: input_tx_pin_hint }
+  - { id: rx_pin, kind: text, label: input_rx_pin, hint: input_rx_pin_hint }
   - { id: baud_rate, kind: text, label: input_baud_rate, hint: input_baud_rate_hint }
   - { id: peer, kind: text, label: input_peer, hint: input_peer_hint }
 
