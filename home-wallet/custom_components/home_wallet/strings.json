@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Home Wallet",
+        "description": "Connect the Home Wallet app. Create a long-lived access token in Home Assistant under your profile, then paste it here. The app uses it to show your passes and open your doors.",
+        "data": {
+          "url": "Home Assistant URL",
+          "token": "Long-lived access token"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Home Wallet is already configured."
+    }
+  },
+  "services": {
+    "create_wallet": {
+      "name": "Create wallet",
+      "description": "Create an access wallet (a digital pass) for a person."
+    },
+    "delete_wallet": {
+      "name": "Delete wallet",
+      "description": "Delete a wallet. Its QR code and NFC tag stop working immediately."
+    },
+    "rotate_wallet": {
+      "name": "Rotate wallet",
+      "description": "Give a wallet a new secret. Old QR codes and NFC tags stop working immediately."
+    },
+    "revoke_wallet": {
+      "name": "Revoke wallet",
+      "description": "Deactivate a wallet without deleting it."
+    },
+    "set_pin": {
+      "name": "Set PIN",
+      "description": "Set a PIN on a wallet for keypads. Leave empty to remove it."
+    },
+    "open_door": {
+      "name": "Open door",
+      "description": "Open a door."
+    },
+    "add_door": {
+      "name": "Add door",
+      "description": "Register a door that wallets can open."
+    },
+    "remove_door": {
+      "name": "Remove door",
+      "description": "Remove a door from Home Wallet."
+    }
+  }
+}

@@ -1,0 +1,127 @@
+create_wallet:
+  name: Create wallet
+  description: Create an access wallet (a digital pass) for a person.
+  response: optional
+  fields:
+    name:
+      name: Name
+      description: The person's name.
+      required: true
+      example: "Sam"
+      selector:
+        text:
+    user_id:
+      name: User ID
+      description: The Home Assistant user this wallet belongs to (defaults to the name).
+      required: false
+      example: "sam"
+      selector:
+        text:
+    person:
+      name: Person
+      description: The person entity to link the wallet to.
+      required: false
+      example: "person.sam"
+      selector:
+        entity:
+          domain: person
+
+delete_wallet:
+  name: Delete wallet
+  description: Delete a wallet. Its QR code and NFC tag stop working immediately.
+  fields:
+    wallet_id:
+      name: Wallet
+      description: The wallet to delete.
+      required: true
+      example: "a1b2c3d4e5f6"
+      selector:
+        text:
+
+rotate_wallet:
+  name: Rotate wallet
+  description: Give a wallet a new secret. Old QR codes and NFC tags stop working immediately (the app picks up the new code on its own).
+  response: optional
+  fields:
+    wallet_id:
+      name: Wallet
+      description: The wallet to rotate.
+      required: true
+      example: "a1b2c3d4e5f6"
+      selector:
+        text:
+
+revoke_wallet:
+  name: Revoke wallet
+  description: Deactivate a wallet without deleting it. The history is kept and the wallet can be reactivated by rotating it.
+  fields:
+    wallet_id:
+      name: Wallet
+      description: The wallet to revoke.
+      required: true
+      example: "a1b2c3d4e5f6"
+      selector:
+        text:
+
+set_pin:
+  name: Set PIN
+  description: Set a PIN on a wallet for keypads. Leave the PIN empty to remove it.
+  fields:
+    wallet_id:
+      name: Wallet
+      description: The wallet.
+      required: true
+      example: "a1b2c3d4e5f6"
+      selector:
+        text:
+    pin:
+      name: PIN
+      description: The PIN (4-12 digits). Empty removes the PIN.
+      required: false
+      example: "483920"
+      selector:
+        text:
+
+open_door:
+  name: Open door
+  description: Open a door.
+  fields:
+    door_id:
+      name: Door
+      description: The door to open.
+      required: true
+      example: "1a2b3c4d"
+      selector:
+        text:
+
+add_door:
+  name: Add door
+  description: Register a door (a lock, gate or garage door) that wallets can open.
+  response: optional
+  fields:
+    name:
+      name: Name
+      description: The door's name.
+      required: true
+      example: "Front door"
+      selector:
+        text:
+    entity_id:
+      name: Entity
+      description: The lock, cover or switch entity that opens the door.
+      required: true
+      example: "lock.front_door"
+      selector:
+        entity:
+
+remove_door:
+  name: Remove door
+  description: Remove a door from Home Wallet.
+  fields:
+    door_id:
+      name: Door
+      description: The door to remove.
+      required: true
+      example: "1a2b3c4d"
+      selector:
+        text:

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="wallet_primary">#1B5E20</color>
+    <color name="wallet_primary_dark">#0D3B10</color>
+    <color name="wallet_accent">#FFB300</color>
+</resources>

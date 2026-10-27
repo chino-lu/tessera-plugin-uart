@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Home Wallet",
+        "description": "Koppel de Home Wallet app. Maak een long-lived access token in Home Assistant onder je profiel en plak het hier. De app gebruikt het om je passen te tonen en deuren te openen.",
+        "data": {
+          "url": "Home Assistant URL",
+          "token": "Long-lived access token"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Home Wallet is al geconfigureerd."
+    }
+  },
+  "services": {
+    "create_wallet": {
+      "name": "Wallet aanmaken",
+      "description": "Maak een toegangsbewijs (digitale pas) aan voor een persoon."
+    },
+    "delete_wallet": {
+      "name": "Wallet verwijderen",
+      "description": "Verwijder een wallet. De QR-code en NFC-tag stoppen direct met werken."
+    },
+    "rotate_wallet": {
+      "name": "Wallet roteren",
+      "description": "Geef een wallet een nieuw geheim. Oude QR-codes en NFC-tags stoppen direct met werken."
+    },
+    "revoke_wallet": {
+      "name": "Wallet intrekken",
+      "description": "Deactiveer een wallet zonder deze te verwijderen."
+    },
+    "set_pin": {
+      "name": "PIN instellen",
+      "description": "Stel een PIN in op een wallet voor bedienpanelen. Leeg verwijdert de PIN."
+    },
+    "open_door": {
+      "name": "Deur openen",
+      "description": "Open een deur."
+    },
+    "add_door": {
+      "name": "Deur toevoegen",
+      "description": "Registreer een deur die wallets kunnen openen."
+    },
+    "remove_door": {
+      "name": "Deur verwijderen",
+      "description": "Verwijder een deur uit Home Wallet."
+    }
+  }
+}
